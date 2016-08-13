@@ -7,6 +7,10 @@
 #ifndef _SIMPLE_HASH_H_
 #define _SIMPLE_HASH_H_
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #define BUF_LEN 20
 
 struct hash_item_t {

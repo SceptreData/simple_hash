@@ -1,11 +1,9 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include <assert.h>
-#include <string.h>
-
 #include "simple_hash.h"
 
-#define BUF_LEN 20
+/* forward declarations */
+unsigned long djb2a_hash( unsigned char *str );
+int _findEmptyBucket( hash_table_t *t, int idx );
 
 hash_table_t *newHashTable( size_t n )
 {
@@ -20,10 +18,6 @@ hash_table_t *newHashTable( size_t n )
 
     return t;
 }
-
-/* forward declarations */
-unsigned long djb2a_hash( unsigned char *str );
-int _findEmptyBucket( hash_table_t *t, int idx );
 
 int hash_add(hash_table_t *table, unsigned char *key, void *data )
 {
@@ -96,20 +90,31 @@ unsigned long djb2a_hash( unsigned char *str )
 int _findEmptyBucket( hash_table_t *t, int idx )
 {    
     int off = 1;
-    for(;;){
+    int bucket_index = -1;
+
+    while( bucket_index < 0 ){
+
+        /* If we've looked through the whole table, return error. */
         if( idx + off > t->capacity && idx - off < 0 ) {
                 return -1;
+        } else {
+            /* Search left and right of our start idx for an empty bucket */
+            if( idx + off <= t->capacity ){
+                if( t->arr[idx + off].key == NULL ){
+                    bucket_index = idx + off;
+                    continue;
+                }
+            }
+            if( idx - off >= 0 ){
+                if( t->arr[idx - off].key == NULL ){
+                    bucket_index = idx - off;
+                    continue;
+                }
+            }
+            off += 1;
         }
-        if( idx + off <= t->capacity ){
-            if( t->arr[idx + off].key == NULL )
-                return idx + off;
-        }
-        if( idx - off >= 0 ){
-            if( t->arr[idx - off].key == NULL )
-                return idx - off;
-        }
-        off += 1;
     }
+    return bucket_index;
 }
 
 
