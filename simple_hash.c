@@ -5,13 +5,15 @@
 unsigned long djb2a_hash( unsigned char *str );
 int _findEmptyBucket( hash_table_t *t, int idx );
 
+int collisions = 0;
+
 hash_table_t *newHashTable( size_t n )
 {
     hash_table_t *t = malloc(sizeof(hash_table_t));
     if (!t)
         return NULL;
     t->capacity = n;
-    t->n_entries = 0;
+    t->n_items = 0;
     t->arr = malloc( n * sizeof( void * ) );
     if (!t->arr)
         return NULL;
@@ -22,18 +24,24 @@ hash_table_t *newHashTable( size_t n )
 int hash_add(hash_table_t *table, unsigned char *key, void *data )
 {
     assert(table && key && data);
-    if( table->n_entries == table->capacity ){
+    if( table->n_items == table->capacity ){
         printf("table full\n");
         return 1;
     }
 
     int idx = (int)djb2a_hash(key) % table->capacity;
     if (table->arr[idx].data != NULL){
+        collisions++;
         idx = _findEmptyBucket( table, idx );
     }
-    
+   
+    if ( idx < 0 ){
+        return 1;
+    }
+
     strncpy( table->arr[idx].key, key, BUF_LEN );
     table->arr[idx].data = data;
+    table->n_items++;
 
     return 0;
 }
@@ -72,6 +80,7 @@ void *hash_getItem( hash_table_t *t, char *key )
         }
         off += 1;
     }
+
     return item;
 }
 
@@ -100,13 +109,13 @@ int _findEmptyBucket( hash_table_t *t, int idx )
         } else {
             /* Search left and right of our start idx for an empty bucket */
             if( idx + off <= t->capacity ){
-                if( t->arr[idx + off].key == NULL ){
+                if( t->arr[idx + off].data == NULL ){
                     bucket_index = idx + off;
                     continue;
                 }
             }
             if( idx - off >= 0 ){
-                if( t->arr[idx - off].key == NULL ){
+                if( t->arr[idx - off].data == NULL ){
                     bucket_index = idx - off;
                     continue;
                 }
@@ -114,9 +123,17 @@ int _findEmptyBucket( hash_table_t *t, int idx )
             off += 1;
         }
     }
+
     return bucket_index;
 }
 
+void report_collisions(hash_table_t *t)
+{
+    float percent_filled = (float)t->n_items / (float)t->capacity;
+    printf("%d, %d, %f\n", t->n_items, t->capacity, percent_filled);
+    printf("Total Collisions: %d\ntable size: %d percent_filled: %.2f\n",
+            collisions, t->capacity, percent_filled );
+}
 
 int hash_lookup( char *key );
 int hash_check( char *key);
