@@ -14,11 +14,23 @@ hash_table_t *newHashTable( size_t n )
         return NULL;
     t->capacity = n;
     t->n_items = 0;
-    t->arr = malloc( n * sizeof( void * ) );
+    t->arr = calloc( n, sizeof( struct hash_item_t ));
     if (!t->arr)
         return NULL;
 
     return t;
+}
+
+int hash_free( hash_table_t *ht )
+{
+    if( ht == NULL ) {
+        return 1;
+    }
+
+    free(ht->arr);
+    free(ht);
+
+    return 0;
 }
 
 int hash_add(hash_table_t *table, unsigned char *key, void *data )
@@ -130,7 +142,6 @@ int _findEmptyBucket( hash_table_t *t, int idx )
 void report_collisions(hash_table_t *t)
 {
     float percent_filled = (float)t->n_items / (float)t->capacity;
-    printf("%d, %d, %f\n", t->n_items, t->capacity, percent_filled);
     printf("Total Collisions: %d\ntable size: %d percent_filled: %.2f\n",
             collisions, t->capacity, percent_filled );
 }
